@@ -426,6 +426,11 @@ int main()
     threads.clear();
     end = std::chrono::system_clock::now();
     //pthread_join(threads[0],&status);
+    //first.join();
+    PrintMatrix();
+    cout<<endl;
+    PrintTrace();
+    cout<<endl;
     for (int start=0;start<Alignments.size();start++)
     {
       if(threads.size()>=max_threads)
@@ -443,18 +448,13 @@ int main()
       threads[threads_count].join();
     }
     threads.clear();
-    //first.join();
-    PrintMatrix();
-    cout<<endl;
-    PrintTrace();
-    cout<<endl;
     Sort(&Alignments);
     show=min((int)Alignments.size(),show);
     for(int alins=0;alins<show;alins++)
     {
       cout<<"________________"<<endl;
       cout<<get<0>(Alignments[alins])<<endl<<get<1>(Alignments[alins])<<endl;
-      cout<<get<2>(Alignments[alins])<<endl;
+      cout<<"Penalidad:"<<get<2>(Alignments[alins])<<endl;
     }
       double elapsed = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
     elapsed = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
