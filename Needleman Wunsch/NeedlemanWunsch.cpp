@@ -7,6 +7,7 @@
 //#include <algorithm>
 #include <mutex>
 //#include <bits/stdc++.h>
+#include "../tools.h"
 
 ///DEFINES///
 #define GAP -2
@@ -35,7 +36,7 @@ typedef pair<int,int> NW; //score, trace
 
 ///GLOBAL///
 vector<NW> Matrix;
-vector <pair<string,string> > Alignments;
+vector <tuple<string,string,int> > Alignments;
 int i,j;
 string first,second;
 
@@ -171,7 +172,7 @@ void Align(alignment data)
       mtx.lock();
       //cout<<"{"<<contador++<<"}"<<endl;
       //cout<<"ok"<<endl;
-      Alignments.push_back(data.aligned);
+      Alignments.push_back(make_tuple(data.aligned.first,data.aligned.second,0));
       mtx.unlock();
       //break;
     }
@@ -316,6 +317,8 @@ int main()
     void* status;
     getline(cin,first);
     getline(cin,second);
+    int show;
+    cin>>show;
     /*if(first.size()>second.size())
     {
       string aux;
@@ -389,14 +392,38 @@ int main()
     end = std::chrono::system_clock::now();
     //pthread_join(threads[0],&status);
     //first.join();
+    int max_threads=thread::hardware_concurrency();
+    vector<thread> threads;
+
+
+    for (int start=0;start<Alignments.size();start++)
+    {
+      if(threads.size()>=max_threads)
+      {
+        for(int threads_count=0;threads_count<threads.size();threads_count++)
+        {
+          threads[threads_count].join();
+        }
+        threads.clear();
+      }
+      threads.push_back(std::thread(getPenalization,&Alignments[start]));
+    }
+    for(int threads_count=0;threads_count<threads.size();threads_count++)
+    {
+      threads[threads_count].join();
+    }
+    threads.clear();
     PrintMatrix();
     cout<<endl;
     PrintTrace();
     cout<<endl;
-    for(int alins=0;alins<Alignments.size();alins++)
+    Sort(&Alignments);
+    show=min((int)Alignments.size(),show);
+    for(int alins=0;alins<show;alins++)
     {
       cout<<"________________"<<endl;
-      cout<<Alignments[alins].first<<endl<<Alignments[alins].second<<endl;
+      cout<<get<0>(Alignments[alins])<<endl<<get<1>(Alignments[alins])<<endl;
+      cout<<get<2>(Alignments[alins])<<endl;
     }
       double elapsed = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
     elapsed = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
