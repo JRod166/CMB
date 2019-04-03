@@ -1,12 +1,12 @@
 #include <iostream>
 #include <string>
-#include <utility>
+//#include <utility>
 #include <vector>
 #include <thread>
-#include <pthread.h>
-#include <algorithm>
+//#include <pthread.h>
+//#include <algorithm>
 #include <mutex>
-#include <bits/stdc++.h>
+//#include <bits/stdc++.h>
 
 #define GAP -2
 #define MATCH +1
@@ -99,12 +99,11 @@ void PrintTrace()
         cout<<endl;
     }
 }
-void *fillMatrix(void *thread_info)
+//void *fillMatrix(void *thread_info)
+void fillMatrix(thread_pos data)
 {
-  struct thread_pos *data;
-  data=(struct thread_pos *) thread_info;
-  int pos=data->position,match_value;
-  if(data->orientation)
+  int pos=data.position,match_value;
+  if(data.orientation)
   {
     pos++;
     while(pos%(j+1)!=0) //horizonatal
@@ -305,19 +304,19 @@ void Align(alignment data)
 }
 int main()
 {
-    vector<pthread_t> threads;
-    threads.resize(2);
+    /*vector<pthread_t> threads;
+    threads.resize(2);*/
     struct thread_pos t_p[2];
     void* status;
     getline(cin,first);
     getline(cin,second);
-    if(first.size()>second.size())
+    /*if(first.size()>second.size())
     {
       string aux;
       aux=first;
       first=second;
       second=aux;
-    }
+    }*/
     //cout<<first<<endl<<second<<endl;
     //cout<<first<<endl<<second<<endl;
     i=first.size();
@@ -359,18 +358,22 @@ int main()
         t_p[a].position=((j+1)*z+z);
         t_p[a].orientation=a;
         t_p[a].iteration=z;
-        pthread_create(&threads[a],NULL,fillMatrix,(void *)&t_p[a]);
+        //thread (&threads[a],NULL,fillMatrix,(void *)&t_p[a]);
       }
-      for(int a=0;a<2;a++)
+      thread firstt(fillMatrix,t_p[0]);
+      thread secondt(fillMatrix,t_p[1]);
+      /*for(int a=0;a<2;a++)
       {
         pthread_join(threads[a],&status);
-      }
+      }*/
+      firstt.join();
+      secondt.join();
     }
     //pthread_exit(NULL);
     auto end = std::chrono::system_clock::now();
     double elapsed1 = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
     //cout<<Matrix.size()<<endl;
-    threads.resize(1);
+    //threads.resize(1);
     struct alignment al[1];
     al[0].position=Matrix.size()-1;
     al[0].aligned=make_pair("","");
