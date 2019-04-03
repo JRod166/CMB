@@ -8,6 +8,7 @@
 #include <mutex>
 //#include <bits/stdc++.h>
 
+///DEFINES///
 #define GAP -2
 #define MATCH +1
 #define MISMATCH -1
@@ -31,12 +32,16 @@ typedef pair<int,int> NW; //score, trace
       7= top+diag
       9= left+top+diag
                                   */
+
+///GLOBAL///
 vector<NW> Matrix;
 vector <pair<string,string> > Alignments;
 int i,j;
 string first,second;
 
 std::mutex mtx,mtx_max;
+
+///STRUCTS///
 struct thread_pos
 {
   int position;
@@ -49,6 +54,7 @@ struct alignment
   pair <string,string> aligned;
 };
 
+///FUNCTIONS///
 NW fill(int pos, int match_value)
 {
 //cout<<match_value;
