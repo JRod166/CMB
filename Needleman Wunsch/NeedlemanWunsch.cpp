@@ -339,7 +339,7 @@ int main()
       //cout<<"{"<<Matrix[(y-1)*(j+1)].first<<"}";
       //cout<<"{"<<Matrix[(y)*(j+1)].first<<"}"<<endl;
     }
-    for(int z=1;z<=i;z++)
+    for(int z=1;z<=min(i,j);z++)
     {
       //cout<<z<<endl;
       //cout<<first[z-1]<<"-"<<second[z-1]<<endl;
