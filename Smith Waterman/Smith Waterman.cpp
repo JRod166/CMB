@@ -96,6 +96,10 @@ SW fill(int pos, int match_value)
     max_alignment=aux;
   }
   mtx.unlock();
+  /*if(maxim==0)
+  {
+    return make_pair(0,0);
+  }*/
   //cout<<"["<<trace<<"]"<<endl;
   return make_pair(maxim,trace);
 }
@@ -176,7 +180,8 @@ void Align(alignment data)
 {
   struct alignment data2,data3;
   int a=Matrix[data.position].second;
-  if(Matrix[data.position].first==DONE)
+  int b=Matrix[data.position].first;
+  if(b==DONE)
   {
     //cout<<data.aligned.first<<endl<<data.aligned.second<<endl;
     mtx.lock();
@@ -185,6 +190,7 @@ void Align(alignment data)
     Alignments.push_back(make_tuple(data.aligned.first,data.aligned.second,0));
     mtx.unlock();
     //break;
+    return;
   }
   //case LEFTGAP:
     //cout<<(data->position+1)/(i+1)-2<<endl;
@@ -318,6 +324,10 @@ void Align(alignment data)
     firstt.join();*/
     Align(data3);
   }
+  else {
+    cout<<"error: "<<a<<"->"<<b<<"{"<<data.position<<"}"<<endl;
+    //exit(0);
+  }
 
 }
 
@@ -346,7 +356,7 @@ int main()
     Matrix.resize((i+1)*(j+1));
     //cout<<Matrix.size()<<endl;
     auto start = std::chrono::system_clock::now();
-    Matrix[0]=make_pair(0,-1);
+    Matrix[0]=make_pair(0,0);
     for (int x=1;x<=j;x++)
     {
         //cout<<"{"<<x<<"}"<<endl;
@@ -402,6 +412,10 @@ int main()
 
     //al[0].aligned=make_pair("","");
     /*pthread_create(&threads[0],NULL,Align,(void *)&al[0]);*/
+    PrintMatrix();
+    cout<<endl;
+    PrintTrace();
+    cout<<endl;
     start = std::chrono::system_clock::now();
     //Align(al[0]);
     for (int start=0;start<start_positions.size();start++)
@@ -409,7 +423,7 @@ int main()
       al[start].position=start_positions[start];
       al[start].aligned.first="";
       al[start].aligned.second="";
-      if(threads.size()>=max_threads)
+      /*if(threads.size()>=max_threads)
       {
         for(int threads_count=0;threads_count<threads.size();threads_count++)
         {
@@ -417,20 +431,18 @@ int main()
         }
         threads.clear();
       }
-      threads.push_back(std::thread(Align,al[start]));
+      threads.push_back(std::thread(Align,al[start]));*/
+      //cout<<al[start].position<<endl;
+      Align(al[start]);
     }
-    for(int threads_count=0;threads_count<threads.size();threads_count++)
+    /*for(int threads_count=0;threads_count<threads.size();threads_count++)
     {
       threads[threads_count].join();
     }
-    threads.clear();
+    threads.clear();*/
     end = std::chrono::system_clock::now();
     //pthread_join(threads[0],&status);
     //first.join();
-    PrintMatrix();
-    cout<<endl;
-    PrintTrace();
-    cout<<endl;
     for (int start=0;start<Alignments.size();start++)
     {
       if(threads.size()>=max_threads)
@@ -458,6 +470,7 @@ int main()
     }
       double elapsed = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
     elapsed = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
+    cout<<"STARTS: "<<start_positions.size()<<endl;
     cout<<"Numero de alineamientos: "<<Alignments.size()<<endl;
     cout<<"El score es: "<<max_alignment<<endl;
     printf("El tiempo del Algoritmo Needleman-Wunsch: %.9f segundos\n",elapsed1);

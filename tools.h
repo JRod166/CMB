@@ -3,6 +3,9 @@
 
 using namespace std;
 
+#define Q 3
+#define P 5-Q ///P=5 (siempre restarle Q)
+
 vector <tuple <string,string,int>> arr;
 
 // Merges two subarrays of arr[].
@@ -94,10 +97,10 @@ int stringPenalization(string data)
   {
     if(data[i]=='-')
     {
-      localPenalization+=3;
+      localPenalization+=Q;
       if(data[i-1]!='-')
       {
-        localPenalization+=2;
+        localPenalization+=P;
       }
     }
   }
