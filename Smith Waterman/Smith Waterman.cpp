@@ -441,7 +441,6 @@ int main()
       threads[threads_count].join();
     }
     threads.clear();*/
-    end = std::chrono::system_clock::now();
     //pthread_join(threads[0],&status);
     //first.join();
     for (int start=0;start<Alignments.size();start++)
@@ -462,6 +461,7 @@ int main()
     }
     threads.clear();
     Sort(&Alignments);
+    end = std::chrono::system_clock::now();
     show=min((int)Alignments.size(),show);
     for(int alins=0;alins<show;alins++)
     {

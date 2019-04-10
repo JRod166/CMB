@@ -387,13 +387,12 @@ int main()
     al[0].position=Matrix.size()-1;
     al[0].aligned=make_pair("","");
     /*pthread_create(&threads[0],NULL,Align,(void *)&al[0]);*/
-    start = std::chrono::system_clock::now();
-    Align(al[0]);
-    end = std::chrono::system_clock::now();
-    //pthread_join(threads[0],&status);
-    //first.join();
     int max_threads=thread::hardware_concurrency();
     vector<thread> threads;
+    start = std::chrono::system_clock::now();
+    Align(al[0]);
+    //pthread_join(threads[0],&status);
+    //first.join();
 
 
     for (int start=0;start<Alignments.size();start++)
@@ -413,11 +412,12 @@ int main()
       threads[threads_count].join();
     }
     threads.clear();
-    PrintMatrix();
+    /*PrintMatrix();
     cout<<endl;
     PrintTrace();
-    cout<<endl;
+    cout<<endl;*/
     Sort(&Alignments);
+    end = std::chrono::system_clock::now();
     show=min((int)Alignments.size(),show);
     for(int alins=0;alins<show;alins++)
     {
