@@ -5,8 +5,7 @@
 #include <mutex>
 #include "../tools.h"
 /*
-ATGACGTGT
-ATGTACTC
+g++ -o smitwat Smith\ Waterman.cpp -pthread -std=c++11
 */
 
 ///DEFINES///

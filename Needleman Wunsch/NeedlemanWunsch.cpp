@@ -1,3 +1,7 @@
+
+/*
+  g++ -o needwun NeedleanWunsch.cpp -pthread -std=c++11
+*/
 #include <iostream>
 #include <string>
 //#include <utility>
