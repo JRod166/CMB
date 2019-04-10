@@ -412,10 +412,11 @@ int main()
 
     //al[0].aligned=make_pair("","");
     /*pthread_create(&threads[0],NULL,Align,(void *)&al[0]);*/
+    /*
     PrintMatrix();
     cout<<endl;
     PrintTrace();
-    cout<<endl;
+    cout<<endl;*/
     start = std::chrono::system_clock::now();
     //Align(al[0]);
     for (int start=0;start<start_positions.size();start++)
