@@ -1,6 +1,6 @@
 
 /*
-  g++ -o needwun NeedleanWunsch.cpp -pthread -std=c++11
+  g++ -o needwun NeedlemanWunsch.cpp -pthread -std=c++11
 */
 #include <iostream>
 #include <string>

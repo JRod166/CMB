@@ -324,7 +324,7 @@ void Align(alignment data)
     Align(data3);
   }
   else {
-    cout<<"error: "<<a<<"->"<<b<<"{"<<data.position<<"}"<<endl;
+    //cout<<"error: "<<a<<"->"<<b<<"{"<<data.position<<"}"<<endl;
     //exit(0);
   }
 
