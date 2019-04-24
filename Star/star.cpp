@@ -1,17 +1,13 @@
-
-/*
-  g++ -o needwun NeedlemanWunsch.cpp -pthread -std=c++11
-*/
 #include <iostream>
 #include <string>
-//#include <utility>
 #include <vector>
 #include <thread>
-//#include <pthread.h>
-//#include <algorithm>
 #include <mutex>
-//#include <bits/stdc++.h>
 #include "../tools.h"
+#include <algorithm>
+/*
+g++ -o star star.cpp -pthread -std=c++11
+*/
 
 ///DEFINES///
 #define GAP -2
@@ -43,7 +39,7 @@ vector<NW> Matrix;
 vector <tuple<string,string,int> > Alignments;
 int i,j;
 string first,second;
-
+vector <pair <vector<NW>,int>> Results;
 std::mutex mtx,mtx_max;
 
 ///STRUCTS///
@@ -62,15 +58,11 @@ struct alignment
 ///FUNCTIONS///
 NW fill(int pos, int match_value)
 {
-//cout<<match_value;
   int top,left,diag,maxim,trace=0;
-  //cout<<"{"<<pos<<"}"<<endl;
   top=Matrix[pos-(j+1)].first+GAP;
   left=Matrix[pos-1].first+GAP;
   diag=Matrix[pos-(j+2)].first+match_value;
   maxim=max(top,max(left,diag));
-  //cout<<"["<<pos<<"]"<<"{"<<top<<"}"<<"{"<<left<<"}"<<"{"<<diag<<"}";
-  //cout<<"<<"<<maxim<<">>"<<endl;
   if(maxim==top)
   {
     trace+=TOPGAP;
@@ -83,7 +75,6 @@ NW fill(int pos, int match_value)
   {
     trace+=DIAG;
   }
-  //cout<<"["<<trace<<"]"<<endl;
   return make_pair(maxim,trace);
 }
 
@@ -99,18 +90,6 @@ void PrintMatrix()
     }
 }
 
-void PrintTrace()
-{
-    for(int x=0;x<=i;x++)
-    {
-        for (int y=0;y<=j;y++)
-        {
-            cout<<Matrix[x*(j+1)+y].second<<"\t";
-        }
-        cout<<endl;
-    }
-}
-//void *fillMatrix(void *thread_info)
 void fillMatrix(thread_pos data)
 {
   int pos=data.position,match_value;
@@ -119,8 +98,6 @@ void fillMatrix(thread_pos data)
     pos++;
     while(pos%(j+1)!=0) //horizonatal
     {
-      //cout<<"{"<<pos<<"}"<<"<"<<pos-(data->iteration*(j+1))-1<<">"<<first[data->iteration-1]<<"-"<<second[pos-(data->iteration*(j+1))-1]<<endl;
-      //cout<<"{"<<pos<<"}"<<endl;]
       if(first[pos/(j+1)-1]==second[pos%(j+1)-1])
       {
         match_value=MATCH;
@@ -132,14 +109,12 @@ void fillMatrix(thread_pos data)
       Matrix[pos]=fill(pos,match_value);
       pos++;
     }
-    //cout<<0<<endl;
   }
-  else //vertical
+  else
   {
     pos+=j+1;
     while(pos<=Matrix.size())
     {
-      //cout<<"{"<<pos<<"}"<<first[pos/(i+1)-1]<<"-"<<second[data->iteration-1]<<endl;
       if(first[pos/(j+1)-1]==second[pos%(j+1)-1])
       {
         match_value=MATCH;
@@ -148,15 +123,12 @@ void fillMatrix(thread_pos data)
       {
         match_value=MISMATCH;
       }
-      //cout<<"{"<<pos<<"}"<<endl;
       Matrix[pos]=fill(pos,match_value);
       pos+=j+1;
     }
-    //cout<<1<<endl;
   }
 }
-
-//int contador=1;
+//int contadorr=0;
 void Align(alignment data)
 {
   /*//mtx_max.lock();
@@ -167,6 +139,7 @@ void Align(alignment data)
   //cout<<data.aligned.first<<endl<<data.aligned.second<<endl;
   //cout<<"{"<<data.position<<"}"<<endl;
   int a=Matrix[data.position].second;
+  //cout<<data.position<<endl;
   /*switch (Matrix[data.position].second)
   {
     case DONE:*/
@@ -178,6 +151,7 @@ void Align(alignment data)
       //cout<<"ok"<<endl;
       Alignments.push_back(make_tuple(data.aligned.first,data.aligned.second,0));
       mtx.unlock();
+      return;
       //break;
     }
     //case LEFTGAP:
@@ -314,128 +288,187 @@ void Align(alignment data)
       Align(data3);
     }
 }
+
+void PrintTrace()
+{
+    for(int x=0;x<=i;x++)
+    {
+        for (int y=0;y<=j;y++)
+        {
+            cout<<Matrix[x*(j+1)+y].first<<"\t";
+        }
+        cout<<endl;
+    }
+}
+
+void NeedWuns(string first, string second)
+{
+  //cout<<first<<"-"<<second<<endl;
+  Matrix.resize(0);
+  struct thread_pos t_p[2];
+  i=first.size();
+  j=second.size();
+  Matrix.resize((i+1)*(j+1));
+  Matrix[0]=make_pair(0,-1);
+  for (int x=1;x<=j;x++)
+  {
+      Matrix[x]=make_pair(Matrix[(x-1)].first+GAP,LEFTGAP);
+  }
+  for(int y=1;y<=i;y++)
+  {
+    Matrix[y*(j+1)]=make_pair(Matrix[(y-1)*(j+1)].first+GAP,TOPGAP);
+  }
+  for(int z=1;z<=min(i,j);z++)
+  {
+    if(first[z-1]==second[z-1])
+    {
+      Matrix[(j+1)*z+z]=fill((j+1)*z+z,MATCH);
+    }
+    else
+    {
+      Matrix[(j+1)*z+z]=fill((j+1)*z+z,MISMATCH);
+    }
+
+    for(int a=0;a<2;a++)
+    {
+      t_p[a].position=((j+1)*z+z);
+      t_p[a].orientation=a;
+      t_p[a].iteration=z;
+    }
+    thread firstt(fillMatrix,t_p[0]);
+    thread secondt(fillMatrix,t_p[1]);
+    firstt.join();
+    secondt.join();
+  }
+}
+int get_center(int cant)
+{
+  vector<int> sumas;
+  int sum=0;
+  for(int x=0;x<=cant-1;x++)
+  {
+      for (int y=0;y<=cant-1;y++)
+      {
+          sum+=Results[x*(cant)+y].second;
+      }
+      sumas.push_back(sum);
+      sum=0;
+  }
+  return max_element(sumas.begin(),sumas.end()) - sumas.begin();
+}
+void GapFill(string *sequence, int size)
+{
+  while(sequence->size()<size)
+  {
+    *sequence+='-';
+  }
+}
+
+using namespace std;
+
 int main()
 {
-    /*vector<pthread_t> threads;
-    threads.resize(2);*/
-    struct thread_pos t_p[2];
-    void* status;
-    getline(cin,first);
-    getline(cin,second);
-    int show;
-    cin>>show;
-    /*if(first.size()>second.size())
+  vector <string> secuences;
+  int cant,center;
+  cin>>cant;
+  secuences.resize(cant);
+  Results.resize(cant*cant);
+  for (int i=0;i<cant;i++)
+  {
+    cin>>secuences[i];
+  }
+  for (int i=0;i<cant-1;i++)
+  {
+    for(int j=i+1;j<cant;j++)
     {
-      string aux;
-      aux=first;
-      first=second;
-      second=aux;
-    }*/
-    //cout<<first<<endl<<second<<endl;
-    //cout<<first<<endl<<second<<endl;
-    i=first.size();
-    j=second.size();
-    //Init Score Matrix
-    Matrix.resize((i+1)*(j+1));
-    //cout<<Matrix.size()<<endl;
-    auto start = std::chrono::system_clock::now();
-    Matrix[0]=make_pair(0,-1);
-    for (int x=1;x<=j;x++)
-    {
-        //cout<<"{"<<x<<"}"<<endl;
-        Matrix[x]=make_pair(Matrix[(x-1)].first+GAP,LEFTGAP);
-        //cout<<"{"<<Matrix[x].first<<"}"<<endl;
+      first=secuences[i];
+      second=secuences[j];
+      NeedWuns(first,second);
+      //PrintTrace();
+      //cout<<i*(cant)+j<<"-"<<Matrix[Matrix.size()-1].first<<endl;
+      Results[i*(cant)+j]=make_pair(Matrix,Matrix[Matrix.size()-1].first);
+      Results[j*(cant)+i]=make_pair(vector<NW>(),Matrix[Matrix.size()-1].first);
+      /*
+5
+ATTGCCATT
+ATGGCCATT
+ATCCAATTTT
+ATCTTCTT
+ACTGACC
+      */
     }
-    for(int y=1;y<=i;y++)
-    {
-      //cout<<"{"<<y*(j+1)<<"}";
-      Matrix[y*(j+1)]=make_pair(Matrix[(y-1)*(j+1)].first+GAP,TOPGAP);
-      //cout<<"{"<<Matrix[(y-1)*(j+1)].first<<"}";
-      //cout<<"{"<<Matrix[(y)*(j+1)].first<<"}"<<endl;
-    }
-    for(int z=1;z<=min(i,j);z++)
-    {
-      //cout<<z<<endl;
-      //cout<<first[z-1]<<"-"<<second[z-1]<<endl;
-      //cout<<j*z+z<<endl;
-      if(first[z-1]==second[z-1])
+  }
+  for(int x=0;x<cant;x++)
+  {
+      for (int y=0;y<cant;y++)
       {
-        Matrix[(j+1)*z+z]=fill((j+1)*z+z,MATCH);
+          cout<<Results[x*(cant)+y].second<<"\t";
       }
-      else
-      {
-        Matrix[(j+1)*z+z]=fill((j+1)*z+z,MISMATCH);
-      }
-
-      for(int a=0;a<2;a++)
-      {
-        t_p[a].position=((j+1)*z+z);
-        t_p[a].orientation=a;
-        t_p[a].iteration=z;
-        //thread (&threads[a],NULL,fillMatrix,(void *)&t_p[a]);
-      }
-      thread firstt(fillMatrix,t_p[0]);
-      thread secondt(fillMatrix,t_p[1]);
-      /*for(int a=0;a<2;a++)
-      {
-        pthread_join(threads[a],&status);
-      }*/
-      firstt.join();
-      secondt.join();
-    }
-    //pthread_exit(NULL);
-    auto end = std::chrono::system_clock::now();
-    double elapsed1 = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
-    //cout<<Matrix.size()<<endl;
-    //threads.resize(1);
+      cout<<endl;
+  }
+  Matrix.clear();
+  Matrix.shrink_to_fit();
+  Matrix.resize(0);
+  int max_sequence=0;
+  vector <string> finalSequences;
+  center=get_center(cant);
+  cout<<center<<endl;
+  first=secuences[center];
+  j=first.size();
+  for (int y=0; y<center;y++)
+  {
+    Matrix.clear();
+    Matrix.shrink_to_fit();
+    Matrix.resize(0);
+    second=secuences[y];
+    i=second.size();
+    Matrix=Results[center+y*cant].first;
+    //cout<<center+y*cant<<": "<<Matrix[Matrix.size()-1].first<<endl;
     struct alignment al[1];
     al[0].position=Matrix.size()-1;
     al[0].aligned=make_pair("","");
-    /*pthread_create(&threads[0],NULL,Align,(void *)&al[0]);*/
-    int max_threads=thread::hardware_concurrency();
-    vector<thread> threads;
-    start = std::chrono::system_clock::now();
+    //cout<<"Struct creado"<<endl;
+    //PrintTrace();
     Align(al[0]);
-    //pthread_join(threads[0],&status);
-    //first.join();
+    //cout<<"Aligned"<<endl;
+    int aux=get<0>(Alignments[0]).size();
+    max_sequence=max(max_sequence,aux);
+    finalSequences.push_back(get<0>(Alignments[0]));
+    Alignments.clear();
+    Alignments.shrink_to_fit();
+    Alignments.resize(0);
+  }
+  cout<<"first: "<<first<<endl;
+  finalSequences.push_back(first);
+  i=first.size();
+  for (int y=center+1;y<cant;y++)
+  {
+    second=secuences[y];
+    j=second.size();
+    Matrix=Results[center*cant+y].first;
+    cout<<Matrix[Matrix.size()-1].first<<endl;
+    struct alignment al[1];
+    al[0].position=Matrix.size()-1;
+    al[0].aligned=make_pair("","");
+    //cout<<"Struct creado"<<endl;
+    //PrintTrace();
+    Align(al[0]);
+    //cout<<"Aligned"<<endl;
+    int aux=get<0>(Alignments[0]).size();
+    max_sequence=max(max_sequence,aux);
+    finalSequences.push_back(get<0>(Alignments[0]));
+    Alignments.clear();
+    Alignments.shrink_to_fit();
+    Alignments.resize(0);
+  }
+    //cout<<Results[center*cant+y].second<<"\t";
+  for(int x=0;x<finalSequences.size();x++)
+  {
+    GapFill(&finalSequences[x],max_sequence);
+    cout<<finalSequences[x]<<endl;
+  }
 
-
-    for (int start=0;start<Alignments.size();start++)
-    {
-      if(threads.size()>=max_threads)
-      {
-        for(int threads_count=0;threads_count<threads.size();threads_count++)
-        {
-          threads[threads_count].join();
-        }
-        threads.clear();
-      }
-      threads.push_back(std::thread(getPenalization,&Alignments[start]));
-    }
-    for(int threads_count=0;threads_count<threads.size();threads_count++)
-    {
-      threads[threads_count].join();
-    }
-    threads.clear();
-    /*PrintMatrix();
-    cout<<endl;
-    PrintTrace();
-    cout<<endl;*/
-    Sort(&Alignments);
-    end = std::chrono::system_clock::now();
-    show=min((int)Alignments.size(),show);
-    for(int alins=0;alins<show;alins++)
-    {
-      cout<<"________________"<<endl;
-      cout<<get<0>(Alignments[alins])<<endl<<get<1>(Alignments[alins])<<endl;
-      cout<<get<2>(Alignments[alins])<<endl;
-    }
-      double elapsed = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
-    elapsed = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
-    cout<<"Numero de alineamientos: "<<Alignments.size()<<endl;
-    cout<<"El score es: "<<Matrix[Matrix.size()-1].first<<endl;
-    printf("El tiempo del Algoritmo Needleman-Wunsch: %.9f segundos\n",elapsed1);
-    printf("El tiempo del Algoritmo de Trazado: %.9f segundos\n",elapsed);
-
-    return 0;
+  /*Results.clear();
+  Results.resize()*/
+  return 0;
 }
