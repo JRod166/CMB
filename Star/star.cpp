@@ -364,6 +364,31 @@ void GapFill(string *sequence, int size)
   }
 }
 
+int sps(std::vector<string> rptaS)
+{
+  int score = 0;
+
+  for (size_t s = 0; s < rptaS[0].size(); s++) {
+    //por cada fila
+    for (size_t i = 0; i < rptaS.size(); i++) {
+      //std::cout << "/* "<< rptaS[i][s]<<" */" << '\n';
+      for (size_t j = i+1; j < rptaS.size(); j++) {
+        if (rptaS[i][s]=='-' && rptaS[j][s]=='-') {
+
+        }else if (rptaS[i][s]=='-' || rptaS[j][s]=='-') {
+          score-=2;
+        }else if (rptaS[i][s]==rptaS[j][s]) {
+          score+=1;
+        }else if (rptaS[i][s]!=rptaS[j][s]) {
+          score-=1;
+        }
+      }
+    }
+    //std::cout << "score: "<<score << '\n';
+  }
+  return score;
+}
+
 using namespace std;
 
 int main()
@@ -412,9 +437,12 @@ ACTGACC
   int max_sequence=0;
   vector <string> finalSequences;
   center=get_center(cant);
-  cout<<center<<endl;
+  cout<<"Centro: "<<center<<endl;
   first=secuences[center];
   j=first.size();
+
+  auto start = std::chrono::system_clock::now();
+
   for (int y=0; y<center;y++)
   {
     Matrix.clear();
@@ -467,7 +495,10 @@ ACTGACC
     GapFill(&finalSequences[x],max_sequence);
     cout<<finalSequences[x]<<endl;
   }
-
+cout<<"Score: "<<sps(finalSequences)<<endl;
+auto end = std::chrono::system_clock::now();
+  double elapsed = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
+  std::cout << "tiempo " <<to_string(elapsed)<< '\n';
   /*Results.clear();
   Results.resize()*/
   return 0;
