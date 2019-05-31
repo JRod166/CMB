@@ -402,6 +402,7 @@ int main()
   {
     cin>>secuences[i];
   }
+  auto start = std::chrono::system_clock::now();
   for (int i=0;i<cant-1;i++)
   {
     for(int j=i+1;j<cant;j++)
@@ -409,28 +410,18 @@ int main()
       first=secuences[i];
       second=secuences[j];
       NeedWuns(first,second);
-      //PrintTrace();
-      //cout<<i*(cant)+j<<"-"<<Matrix[Matrix.size()-1].first<<endl;
       Results[i*(cant)+j]=make_pair(Matrix,Matrix[Matrix.size()-1].first);
       Results[j*(cant)+i]=make_pair(vector<NW>(),Matrix[Matrix.size()-1].first);
-      /*
-5
-ATTGCCATT
-ATGGCCATT
-ATCCAATTTT
-ATCTTCTT
-ACTGACC
-      */
     }
   }
-  for(int x=0;x<cant;x++)
+  /*for(int x=0;x<cant;x++)
   {
       for (int y=0;y<cant;y++)
       {
           cout<<Results[x*(cant)+y].second<<"\t";
       }
       cout<<endl;
-  }
+  }*/
   Matrix.clear();
   Matrix.shrink_to_fit();
   Matrix.resize(0);
@@ -441,7 +432,6 @@ ACTGACC
   first=secuences[center];
   j=first.size();
 
-  auto start = std::chrono::system_clock::now();
 
   for (int y=0; y<center;y++)
   {

@@ -112,3 +112,13 @@ void getPenalization(tuple <string,string,int> *data)
   get<2>(*data)=stringPenalization(get<0>(*data))+stringPenalization(get<1>(*data));
   //cout<<"{"<<get<2>(data)<<"}"<<endl;
 }
+
+float euclidian_distance(vector<float> a, vector <float> b)
+{
+  float acumulado=0;
+  for(int i=0;i<a.size();i++)
+  {
+    acumulado+=pow(abs(a[i]-b[i]),2);
+  }
+  return sqrt(acumulado);
+}
