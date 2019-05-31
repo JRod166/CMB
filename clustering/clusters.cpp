@@ -14,10 +14,13 @@ using namespace std;
 vector <string> data_names;
 vector <vector<float>> data;
 vector <vector<float>> matrix;
+vector <vector<float>> dis_matrix;
 pair <int,int> min_position;
 float min_val=INFINITY;
 float max_cal=-INFINITY;
 
+
+///Data functions begin
 void getData()
 {
   std::fstream datafile;
@@ -58,16 +61,6 @@ void getData()
   }
   data.resize(data.size()-1);
 }
-
-float euclidian_distance(vector<float> a, vector <float> b)
-{
-  float acumulado=0;
-  for(int i=0;i<a.size();i++)
-  {
-    acumulado+=pow(abs(a[i]-b[i]),2);
-  }
-  return sqrt(acumulado);
-}
 void gen_Matrix()
 {
   matrix.resize(data.size());
@@ -91,7 +84,9 @@ void gen_Matrix()
     }
   }
 }
+///data functions end
 
+///general functions begin
 void get_new_min()
 {
   min_val=INFINITY;
@@ -109,7 +104,23 @@ void get_new_min()
   }
 }
 
-void dis_minima(int cant_clust) ///single linkeage
+float get_min_for(int index)
+{
+  float min_local=INFINITY;
+  for(int i=0;i<index;i++)
+  {
+    min_local=min(min_local,matrix[i][index]);
+  }
+  for(int i=index+1;i<matrix.size();i++)
+  {
+    min_local=min(min_local,matrix[min(i,index)][max(i,index)]);
+  }
+  return min_local;
+}
+///general functions end
+
+///metodos aglomerativos begin
+void agl_minimo(int cant_clust) ///single linkeage
 {
   while(data_names.size()>cant_clust)
   {
@@ -175,7 +186,7 @@ void dis_minima(int cant_clust) ///single linkeage
   }
 }
 
-void dis_maxima(int cant_clust) ///complete linkeage
+void agl_maximo(int cant_clust) ///complete linkeage
 {
   while(data_names.size()>cant_clust)
   {
@@ -205,7 +216,7 @@ void dis_maxima(int cant_clust) ///complete linkeage
   }
 }
 
-void dis_promedio(int cant_clust) ///average
+void agl_promedio(int cant_clust) ///average
 {
   while(data_names.size()>cant_clust)
   {
@@ -223,7 +234,7 @@ void dis_promedio(int cant_clust) ///average
     {
       matrix[min_position.first][i]=(matrix[min_position.first][i]+matrix[min(i,min_position.second)][max(i,min_position.second)])/2;
     }
-    data_names[min_position.first]+=" "+data_names[min_position.second];
+    data_names[min_position.first]="("+data_names[min_position.first]+" , "+data_names[min_position.second]+")";
     data_names.erase(data_names.begin()+min_position.second);
     matrix.erase(matrix.begin()+min_position.second);
     for(int i=0;i<matrix.size();i++)
@@ -234,6 +245,45 @@ void dis_promedio(int cant_clust) ///average
     get_new_min();
   }
 }
+///metodos aglomerativos end
+
+///metodos disociativos begin
+void dis_minimo(int cant_clust)
+{
+  vector<vector <float>> dis_matrix;
+  vector<string> auxiliar=data_names;
+  dis_matrix.resize(matrix.size());
+  float max_local=-INFINITY;
+  int max_index;
+  for(int i=0;i<dis_matrix.size();i++)
+  {
+    dis_matrix[i].push_back(get_min_for(i));
+    dis_matrix[i].push_back(INFINITY);
+    dis_matrix[i].push_back(INFINITY);
+    max_local=max(max_local,dis_matrix[i][0]);
+    if(max_local==dis_matrix[i][0])
+    {
+      max_index=i;
+    }
+  }
+  for(int i=0;i<dis_matrix.size();i++)
+  {
+    cout<<auxiliar[i]<<'\t'<<dis_matrix[i][0]<<'\t'<<dis_matrix[i][1]<<'\t'<<dis_matrix[i][2]<<'\t'<<endl;
+  }
+  cout<<auxiliar[max_index]<<endl;
+
+}
+
+void dis_maximo(int cant_clust)
+{
+
+}
+
+void dis_average(int cant_clust)
+{
+
+}
+///metodos disociativos end
 
 
 int main()
@@ -265,9 +315,10 @@ int main()
 */
 
   getData();
+  auto start = std::chrono::system_clock::now();
   gen_Matrix();
 
-/*
+
   cout<<"     ";
   for(int i=0;i<matrix.size();i++)
   {
@@ -284,28 +335,34 @@ int main()
     cout<<"<<<>>>>"<<endl;
   }
 
-*/
+
 switch (opc) {
   case 1:
-    dis_minima(cant);
+    agl_minimo(cant);
     break;
   case 2:
-    dis_maxima(cant);
+    agl_maximo(cant);
     break;
   case 3:
-    dis_promedio(cant);
+    agl_promedio(cant);
     break;
   case 4:
+    dis_minimo(cant);
     break;
   case 5:
+    dis_minimo(cant);
     break;
   case 6:
+    dis_minimo(cant);
     break;
-}
+  }
+  auto end = std::chrono::system_clock::now();
+  double elapsed1 = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
   for(int i=0;i<data_names.size();i++)
   {
     cout<<"<<< "<<data_names[i]<<" >>>"<<'\t'<<endl;
   }
+  cout<<"Time: "<<elapsed1<<"s"<<endl;
 
 
 
