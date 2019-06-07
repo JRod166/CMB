@@ -638,7 +638,9 @@ int main()
   getData();
   auto start = std::chrono::system_clock::now();
   gen_Matrix();
-
+  auto end = std::chrono::system_clock::now();
+  double elapsedgen = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
+  start = std::chrono::system_clock::now();
 /*
   cout<<"     ";
   for(int i=0;i<matrix.size();i++)
@@ -677,13 +679,14 @@ switch (opc) {
     data_names=dis_average(cant);
     break;
   }
-  auto end = std::chrono::system_clock::now();
+  end = std::chrono::system_clock::now();
   double elapsed1 = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
   for(int i=0;i<data_names.size();i++)
   {
     cout<<data_names[i].second<<"->"<<'\t'<<"<<<"<< data_names[i].first<<">>>"<<'\t'<<endl;
   }
-  cout<<"Time: "<<elapsed1<<"s"<<endl;
+  cout<<"Tiempo distancias: "<<elapsedgen<<"s"<<endl;
+  cout<<"Tiempo algoritmo: "<<elapsed1<<"s"<<endl;
 
 
 
