@@ -622,6 +622,42 @@ int main()
   cout<<'\t'<<'\t'<<"5. Complete linkeage"<<endl;
   cout<<'\t'<<'\t'<<"6. Average"<<endl;
   cin>>opc;
+  ofstream output;
+  string name=to_string(cant);
+  switch (opc) {
+  case 1:
+    output.open("Aglomerativo simple"+name+".txt");
+    output<<"Metodo ";
+    output<<"aglomerativo - Simple linkeage"<<endl;
+    break;
+  case 2:
+    output.open("Aglomerativo complete"+name+".txt");
+    output<<"Metodo ";
+    output<<"aglomerativo - Complete linkeage"<<endl;
+    break;
+  case 3:
+    output.open("Aglomerativo average"+name+".txt");
+    output<<"Metodo ";
+    output<<"aglomerativo - Average"<<endl;
+    break;
+  case 4:
+    output.open("Disociativo simple"+name+".txt");
+    output<<"Metodo ";
+    output<<"disociativo - Simple linkeage"<<endl;
+    break;
+  case 5:
+    output.open("Disociativo complete"+name+".txt");
+    output<<"Metodo ";
+    output<<"disociativo - Complete linkeage"<<endl;
+    break;
+  case 6:
+    output.open("Disociativo average"+name+".txt");
+    output<<"Metodo ";
+    output<<"disociativo - Average"<<endl;
+    break;
+  }
+  output<<cant<<" Clusters"<<endl;
+
 
 /*
   for(int i=0;i<data.size();i++)
@@ -640,7 +676,6 @@ int main()
   gen_Matrix();
   auto end = std::chrono::system_clock::now();
   double elapsedgen = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
-  start = std::chrono::system_clock::now();
 /*
   cout<<"     ";
   for(int i=0;i<matrix.size();i++)
@@ -658,6 +693,7 @@ int main()
     cout<<"<<<>>>>"<<endl;
   }
 */
+  start = std::chrono::system_clock::now();
 
 switch (opc) {
   case 1:
@@ -681,9 +717,12 @@ switch (opc) {
   }
   end = std::chrono::system_clock::now();
   double elapsed1 = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
+  output<<"Tiempo distancias: "<<elapsedgen<<"s"<<endl;
+  output<<"Tiempo algoritmo: "<<elapsed1<<"s"<<endl;
   for(int i=0;i<data_names.size();i++)
   {
     cout<<data_names[i].second<<"->"<<'\t'<<"<<<"<< data_names[i].first<<">>>"<<'\t'<<endl;
+    output<<data_names[i].second<<"->"<<'\t'<<"<<<"<< data_names[i].first<<">>>"<<'\t'<<endl;
   }
   cout<<"Tiempo distancias: "<<elapsedgen<<"s"<<endl;
   cout<<"Tiempo algoritmo: "<<elapsed1<<"s"<<endl;
