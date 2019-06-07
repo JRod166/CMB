@@ -11,7 +11,7 @@
 
 
 using namespace std;
-vector <string> data_names;
+vector <pair <string,int>> data_names;
 vector <vector<float>> data;
 vector <vector<float>> matrix;
 vector <vector<float>> dis_matrix;
@@ -35,7 +35,7 @@ void getData()
     {
       if(data_names.size()<data.size())
       {
-        data_names.push_back(s);
+        data_names.push_back(make_pair(s,1));
       }
       else
       {
@@ -117,6 +117,37 @@ float get_min_for(int index)
   }
   return min_local;
 }
+
+float get_min_distance(vector <pair <string,int>> clusters, int index)
+{
+  float min_local=INFINITY;
+  for(int i=0;i<clusters.size();i++)
+  {
+    min_local=min(min_local,matrix[min(index,clusters[i].second)][max(index,clusters[i].second)]);
+  }
+  return min_local;
+}
+
+float get_max_distance(vector <pair <string,int>> clusters, int index)
+{
+  float max_local=-INFINITY;
+  for(int i=0;i<clusters.size();i++)
+  {
+    max_local=max(max_local,matrix[min(index,clusters[i].second)][max(index,clusters[i].second)]);
+  }
+  return max_local;
+}
+
+float get_avg_distance(vector <pair <string,int>> clusters, int index)
+{
+  float acumulado=0;
+  for(int i=0;i<clusters.size();i++)
+  {
+    acumulado+=matrix[min(index,clusters[i].second)][max(index,clusters[i].second)];
+  }
+  return acumulado/clusters.size();
+}
+
 ///general functions end
 
 ///metodos aglomerativos begin
@@ -156,7 +187,8 @@ void agl_minimo(int cant_clust) ///single linkeage
       cout<<endl;
     }
     cout<<"_______________________________"<<endl;*/
-    data_names[min_position.first]+=" "+data_names[min_position.second];
+    data_names[min_position.first].first+=" "+data_names[min_position.second].first;
+    data_names[min_position.first].second+=data_names[min_position.second].second;
     data_names.erase(data_names.begin()+min_position.second);
     matrix.erase(matrix.begin()+min_position.second);
     for(int i=0;i<matrix.size();i++)
@@ -204,7 +236,8 @@ void agl_maximo(int cant_clust) ///complete linkeage
     {
       matrix[min_position.first][i]=max(matrix[min_position.first][i],matrix[min(i,min_position.second)][max(i,min_position.second)]);
     }
-    data_names[min_position.first]+=" "+data_names[min_position.second];
+    data_names[min_position.first].first+=" "+data_names[min_position.second].first;
+    data_names[min_position.first].second+=data_names[min_position.second].second;
     data_names.erase(data_names.begin()+min_position.second);
     matrix.erase(matrix.begin()+min_position.second);
     for(int i=0;i<matrix.size();i++)
@@ -234,7 +267,8 @@ void agl_promedio(int cant_clust) ///average
     {
       matrix[min_position.first][i]=(matrix[min_position.first][i]+matrix[min(i,min_position.second)][max(i,min_position.second)])/2;
     }
-    data_names[min_position.first]="("+data_names[min_position.first]+" , "+data_names[min_position.second]+")";
+    data_names[min_position.first].first+=" "+data_names[min_position.second].first;
+    data_names[min_position.first].second+=data_names[min_position.second].second;
     data_names.erase(data_names.begin()+min_position.second);
     matrix.erase(matrix.begin()+min_position.second);
     for(int i=0;i<matrix.size();i++)
@@ -248,40 +282,285 @@ void agl_promedio(int cant_clust) ///average
 ///metodos aglomerativos end
 
 ///metodos disociativos begin
-void dis_minimo(int cant_clust)
+vector<pair <string,int>> dis_minimo(int cant_clust)
 {
-  vector<vector <float>> dis_matrix;
-  vector<string> auxiliar=data_names;
-  dis_matrix.resize(matrix.size());
-  float max_local=-INFINITY;
-  int max_index;
-  for(int i=0;i<dis_matrix.size();i++)
+  vector <pair <string,int>> auxiliar;  //matriz pequeña Nombre de elemento-indice en matriz de distancias
+  vector <vector <pair <string,int>>> clusters;  //clusters (cada vector es un cluster)
+  vector <vector <float> > util_matrix; ///matriz pequeña
+  vector <pair <string,int> > aux;
+  int max_temp_index;
+  float max_item=-INFINITY;
+  util_matrix.resize(matrix.size());
+  for(int i=0;i<matrix.size();i++)
   {
-    dis_matrix[i].push_back(get_min_for(i));
-    dis_matrix[i].push_back(INFINITY);
-    dis_matrix[i].push_back(INFINITY);
-    max_local=max(max_local,dis_matrix[i][0]);
-    if(max_local==dis_matrix[i][0])
+    auxiliar.push_back(make_pair(data_names[i].first,i));
+    util_matrix[i].resize(3);
+    util_matrix[i][0]=get_min_for(i);
+  }
+  while (clusters.size()<cant_clust && auxiliar.size()!=2)
+  {
+    max_item=-INFINITY;
+    for(int i=0;i<util_matrix.size();i++)
     {
-      max_index=i;
+      max_item=max(max_item,util_matrix[i][0]);
+      if(max_item==util_matrix[i][0])
+      {
+        max_temp_index=i;
+      }
+    }
+    //cout<<"selected: "<<auxiliar[max_temp_index].first<<endl;
+    aux.resize(1);
+    aux[0]=auxiliar[max_temp_index];
+    clusters.push_back(aux);
+    auxiliar.erase(auxiliar.begin()+max_temp_index);
+    util_matrix.erase(util_matrix.begin()+max_temp_index);
+    for(int i=0;i<util_matrix.size();i++)
+    {
+      if (auxiliar[i].second<max_temp_index)
+      {
+        util_matrix[i][1]=matrix[auxiliar[i].second][max_temp_index];
+      }
+      else
+      {
+        util_matrix[i][1]=matrix[max_temp_index][auxiliar[i].second];
+      }
+      util_matrix[i][2]=util_matrix[i][0]-util_matrix[i][1];
+      if(util_matrix[i][2]==0)
+      {
+        //cout<<"inserting: "<<auxiliar[i].first<<endl;
+        clusters[clusters.size()-1].push_back(auxiliar[i]);
+        util_matrix.erase(util_matrix.begin()+i);
+        auxiliar.erase(auxiliar.begin()+i);
+        i--;
+      }
+    }
+    if(clusters[clusters.size()-1].size()>1)
+    {
+      for(int i=0;i<util_matrix.size();i++)
+      {
+        util_matrix[i][1]=get_min_distance(clusters[clusters.size()-1],auxiliar[i].second);
+        util_matrix[i][2]=util_matrix[i][0]-util_matrix[i][1];
+      }
+    }
+    /*cout<<"     ";
+    for(int i=0;i<matrix.size();i++)
+    {
+      cout<<data_names[i]<<"\t";
+    }
+    cout<<endl;
+    for(int i=0;i<matrix.size();i++)
+    {
+      cout<<data_names[i]<<" -> ";
+      for(int j=0;j<matrix.size();j++)
+      {
+        cout<<matrix[i][j]<<'\t';
+      }
+      cout<<"<<<>>>>"<<endl;
+    }*/
+  }
+  vector <pair<string,int>> return_vec;
+  string aux_S;
+  int contador;
+  for (int i=0;i<clusters.size();i++)
+  {
+    aux_S="";
+    contador=0;
+    for (int j=0;j<clusters[i].size();j++)
+    {
+      aux_S+=clusters[i][j].first;
+      aux_S+=" , ";
+      contador++;
+    }
+    aux_S=aux_S.substr(0,aux_S.size()-3);
+    return_vec.push_back(make_pair(aux_S,contador));
+  }
+  contador=0;
+  aux_S="";
+  for (int i=0;i<auxiliar.size();i++)
+  {
+    aux_S+=auxiliar[i].first;
+    aux_S+=" , ";
+    contador++;
+  }
+  aux_S=aux_S.substr(0,aux_S.size()-3);
+  return_vec.push_back(make_pair(aux_S,contador));
+  return return_vec;
+}
+
+vector<pair <string,int>> dis_maximo(int cant_clust)
+{
+  vector <pair <string,int>> auxiliar;  //matriz pequeña Nombre de elemento-indice en matriz de distancias
+  vector <vector <pair <string,int>>> clusters;  //clusters (cada vector es un cluster)
+  vector <vector <float> > util_matrix; ///matriz pequeña
+  vector <pair <string,int> > aux;
+  int max_temp_index;
+  float max_item=-INFINITY;
+  util_matrix.resize(matrix.size());
+  for(int i=0;i<matrix.size();i++)
+  {
+    auxiliar.push_back(make_pair(data_names[i].first,i));
+    util_matrix[i].resize(3);
+    util_matrix[i][0]=get_min_for(i);
+  }
+  while (clusters.size()<cant_clust && auxiliar.size()!=2)
+  {
+    max_item=-INFINITY;
+    for(int i=0;i<util_matrix.size();i++)
+    {
+      max_item=max(max_item,util_matrix[i][0]);
+      if(max_item==util_matrix[i][0])
+      {
+        max_temp_index=i;
+      }
+    }
+    aux.resize(1);
+    aux[0]=auxiliar[max_temp_index];
+    clusters.push_back(aux);
+    auxiliar.erase(auxiliar.begin()+max_temp_index);
+    util_matrix.erase(util_matrix.begin()+max_temp_index);
+    for(int i=0;i<util_matrix.size();i++)
+    {
+      if (auxiliar[i].second<max_temp_index)
+      {
+        util_matrix[i][1]=matrix[auxiliar[i].second][max_temp_index];
+      }
+      else
+      {
+        util_matrix[i][1]=matrix[max_temp_index][auxiliar[i].second];
+      }
+      util_matrix[i][2]=util_matrix[i][0]-util_matrix[i][1];
+      if(util_matrix[i][2]==0)
+      {
+        clusters[clusters.size()-1].push_back(auxiliar[i]);
+        util_matrix.erase(util_matrix.begin()+i);
+        auxiliar.erase(auxiliar.begin()+i);
+        i--;
+      }
+    }
+    if(clusters[clusters.size()-1].size()>1)
+    {
+      for(int i=0;i<util_matrix.size();i++)
+      {
+        util_matrix[i][1]=get_max_distance(clusters[clusters.size()-1],auxiliar[i].second);
+        util_matrix[i][2]=util_matrix[i][0]-util_matrix[i][1];
+      }
     }
   }
-  for(int i=0;i<dis_matrix.size();i++)
+  vector <pair<string,int>> return_vec;
+  string aux_S;
+  int contador;
+  for (int i=0;i<clusters.size();i++)
   {
-    cout<<auxiliar[i]<<'\t'<<dis_matrix[i][0]<<'\t'<<dis_matrix[i][1]<<'\t'<<dis_matrix[i][2]<<'\t'<<endl;
+    aux_S="";
+    contador=0;
+    for (int j=0;j<clusters[i].size();j++)
+    {
+      aux_S+=clusters[i][j].first;
+      aux_S+=" , ";
+      contador++;
+    }
+    aux_S=aux_S.substr(0,aux_S.size()-3);
+    return_vec.push_back(make_pair(aux_S,contador));
   }
-  cout<<auxiliar[max_index]<<endl;
-
+  contador=0;
+  aux_S="";
+  for (int i=0;i<auxiliar.size();i++)
+  {
+    aux_S+=auxiliar[i].first;
+    aux_S+=" , ";
+    contador++;
+  }
+  aux_S=aux_S.substr(0,aux_S.size()-3);
+  return_vec.push_back(make_pair(aux_S,contador));
+  return return_vec;
 }
 
-void dis_maximo(int cant_clust)
+vector<pair <string,int>> dis_average(int cant_clust)
 {
-
-}
-
-void dis_average(int cant_clust)
-{
-
+  vector <pair <string,int>> auxiliar;  //matriz pequeña Nombre de elemento-indice en matriz de distancias
+  vector <vector <pair <string,int>>> clusters;  //clusters (cada vector es un cluster)
+  vector <vector <float> > util_matrix; ///matriz pequeña
+  vector <pair <string,int> > aux;
+  int max_temp_index;
+  float max_item=-INFINITY;
+  util_matrix.resize(matrix.size());
+  for(int i=0;i<matrix.size();i++)
+  {
+    auxiliar.push_back(make_pair(data_names[i].first,i));
+    util_matrix[i].resize(3);
+    util_matrix[i][0]=get_min_for(i);
+  }
+  while (clusters.size()!=cant_clust && auxiliar.size()!=2)
+  {
+    max_item=-INFINITY;
+    for(int i=0;i<util_matrix.size();i++)
+    {
+      max_item=max(max_item,util_matrix[i][0]);
+      if(max_item==util_matrix[i][0])
+      {
+        max_temp_index=i;
+      }
+    }
+    aux.resize(1);
+    aux[0]=auxiliar[max_temp_index];
+    clusters.push_back(aux);
+    auxiliar.erase(auxiliar.begin()+max_temp_index);
+    util_matrix.erase(util_matrix.begin()+max_temp_index);
+    for(int i=0;i<util_matrix.size();i++)
+    {
+      if (auxiliar[i].second<max_temp_index)
+      {
+        util_matrix[i][1]=matrix[auxiliar[i].second][max_temp_index];
+      }
+      else
+      {
+        util_matrix[i][1]=matrix[max_temp_index][auxiliar[i].second];
+      }
+      util_matrix[i][2]=util_matrix[i][0]-util_matrix[i][1];
+      if(util_matrix[i][2]==0)
+      {
+        clusters[clusters.size()-1].push_back(auxiliar[i]);
+        util_matrix.erase(util_matrix.begin()+i);
+        auxiliar.erase(auxiliar.begin()+i);
+        i--;
+      }
+    }
+    if(clusters[clusters.size()-1].size()>1)
+    {
+      for(int i=0;i<util_matrix.size();i++)
+      {
+        util_matrix[i][1]=get_avg_distance(clusters[clusters.size()-1],auxiliar[i].second);
+        util_matrix[i][2]=util_matrix[i][0]-util_matrix[i][1];
+      }
+    }
+  }
+  vector <pair<string,int>> return_vec;
+  string aux_S;
+  int contador;
+  for (int i=0;i<clusters.size();i++)
+  {
+    aux_S="";
+    contador=0;
+    for (int j=0;j<clusters[i].size();j++)
+    {
+      aux_S+=clusters[i][j].first;
+      aux_S+=" , ";
+      contador++;
+    }
+    aux_S=aux_S.substr(0,aux_S.size()-3);
+    return_vec.push_back(make_pair(aux_S,contador));
+  }
+  contador=0;
+  aux_S="";
+  for (int i=0;i<auxiliar.size();i++)
+  {
+    aux_S+=auxiliar[i].first;
+    aux_S+=" , ";
+    contador++;
+  }
+  aux_S=aux_S.substr(0,aux_S.size()-3);
+  return_vec.push_back(make_pair(aux_S,contador));
+  return return_vec;
 }
 ///metodos disociativos end
 
@@ -318,7 +597,7 @@ int main()
   auto start = std::chrono::system_clock::now();
   gen_Matrix();
 
-
+/*
   cout<<"     ";
   for(int i=0;i<matrix.size();i++)
   {
@@ -334,7 +613,7 @@ int main()
     }
     cout<<"<<<>>>>"<<endl;
   }
-
+*/
 
 switch (opc) {
   case 1:
@@ -347,20 +626,20 @@ switch (opc) {
     agl_promedio(cant);
     break;
   case 4:
-    dis_minimo(cant);
+    data_names=dis_minimo(cant);
     break;
   case 5:
-    dis_minimo(cant);
+    data_names=dis_maximo(cant);
     break;
   case 6:
-    dis_minimo(cant);
+    data_names=dis_average(cant);
     break;
   }
   auto end = std::chrono::system_clock::now();
   double elapsed1 = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
   for(int i=0;i<data_names.size();i++)
   {
-    cout<<"<<< "<<data_names[i]<<" >>>"<<'\t'<<endl;
+    cout<<data_names[i].second<<"->"<<'\t'<<"<<<"<< data_names[i].first<<">>>"<<'\t'<<endl;
   }
   cout<<"Time: "<<elapsed1<<"s"<<endl;
 
