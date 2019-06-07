@@ -325,7 +325,7 @@ vector<pair <string,int>> dis_minimo(int cant_clust)
         util_matrix[i][1]=matrix[max_temp_index][auxiliar[i].second];
       }
       util_matrix[i][2]=util_matrix[i][0]-util_matrix[i][1];
-      if(util_matrix[i][2]==0)
+      if(util_matrix[i][2]>=0)
       {
         //cout<<"inserting: "<<auxiliar[i].first<<endl;
         clusters[clusters.size()-1].push_back(auxiliar[i]);
@@ -334,12 +334,26 @@ vector<pair <string,int>> dis_minimo(int cant_clust)
         i--;
       }
     }
+    bool zero=1;
     if(clusters[clusters.size()-1].size()>1)
     {
-      for(int i=0;i<util_matrix.size();i++)
+      while(zero)
       {
-        util_matrix[i][1]=get_min_distance(clusters[clusters.size()-1],auxiliar[i].second);
-        util_matrix[i][2]=util_matrix[i][0]-util_matrix[i][1];
+        zero=0;
+        for(int i=0;i<util_matrix.size();i++)
+        {
+          util_matrix[i][1]=get_min_distance(clusters[clusters.size()-1],auxiliar[i].second);
+          util_matrix[i][2]=util_matrix[i][0]-util_matrix[i][1];
+          if(util_matrix[i][2]>=0)
+          {
+            //cout<<"inserting: "<<auxiliar[i].first<<endl;
+            clusters[clusters.size()-1].push_back(auxiliar[i]);
+            util_matrix.erase(util_matrix.begin()+i);
+            auxiliar.erase(auxiliar.begin()+i);
+            i--;
+            zero=1;
+          }
+        }
       }
     }
     /*cout<<"     ";
@@ -429,7 +443,7 @@ vector<pair <string,int>> dis_maximo(int cant_clust)
         util_matrix[i][1]=matrix[max_temp_index][auxiliar[i].second];
       }
       util_matrix[i][2]=util_matrix[i][0]-util_matrix[i][1];
-      if(util_matrix[i][2]==0)
+      if(util_matrix[i][2]>=0)
       {
         clusters[clusters.size()-1].push_back(auxiliar[i]);
         util_matrix.erase(util_matrix.begin()+i);
@@ -437,12 +451,26 @@ vector<pair <string,int>> dis_maximo(int cant_clust)
         i--;
       }
     }
+    bool zero=1;
     if(clusters[clusters.size()-1].size()>1)
     {
-      for(int i=0;i<util_matrix.size();i++)
+      while(zero)
       {
-        util_matrix[i][1]=get_max_distance(clusters[clusters.size()-1],auxiliar[i].second);
-        util_matrix[i][2]=util_matrix[i][0]-util_matrix[i][1];
+        zero=0;
+        for(int i=0;i<util_matrix.size();i++)
+        {
+          util_matrix[i][1]=get_max_distance(clusters[clusters.size()-1],auxiliar[i].second);
+          util_matrix[i][2]=util_matrix[i][0]-util_matrix[i][1];
+          if(util_matrix[i][2]>=0)
+          {
+            //cout<<"inserting: "<<auxiliar[i].first<<endl;
+            clusters[clusters.size()-1].push_back(auxiliar[i]);
+            util_matrix.erase(util_matrix.begin()+i);
+            auxiliar.erase(auxiliar.begin()+i);
+            i--;
+            zero=1;
+          }
+        }
       }
     }
   }
@@ -517,7 +545,7 @@ vector<pair <string,int>> dis_average(int cant_clust)
         util_matrix[i][1]=matrix[max_temp_index][auxiliar[i].second];
       }
       util_matrix[i][2]=util_matrix[i][0]-util_matrix[i][1];
-      if(util_matrix[i][2]==0)
+      if(util_matrix[i][2]>=0)
       {
         clusters[clusters.size()-1].push_back(auxiliar[i]);
         util_matrix.erase(util_matrix.begin()+i);
@@ -525,12 +553,26 @@ vector<pair <string,int>> dis_average(int cant_clust)
         i--;
       }
     }
+    bool zero=1;
     if(clusters[clusters.size()-1].size()>1)
     {
-      for(int i=0;i<util_matrix.size();i++)
+      while(zero)
       {
-        util_matrix[i][1]=get_avg_distance(clusters[clusters.size()-1],auxiliar[i].second);
-        util_matrix[i][2]=util_matrix[i][0]-util_matrix[i][1];
+        zero=0;
+        for(int i=0;i<util_matrix.size();i++)
+        {
+          util_matrix[i][1]=get_avg_distance(clusters[clusters.size()-1],auxiliar[i].second);
+          util_matrix[i][2]=util_matrix[i][0]-util_matrix[i][1];
+          if(util_matrix[i][2]>=0)
+          {
+            //cout<<"inserting: "<<auxiliar[i].first<<endl;
+            clusters[clusters.size()-1].push_back(auxiliar[i]);
+            util_matrix.erase(util_matrix.begin()+i);
+            auxiliar.erase(auxiliar.begin()+i);
+            i--;
+            zero=1;
+          }
+        }
       }
     }
   }
