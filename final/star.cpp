@@ -35,11 +35,12 @@ typedef pair<int,int> NW; //score, trace
                                   */
 
 ///GLOBAL///
-vector<NW> Matrix;
+vector<int> ScoreMatrix;
+vector<int> Matrix;
 vector <tuple<string,string,int> > Alignments;
 int i,j;
 string first,second;
-vector <pair <vector<NW>,int>> Results;
+vector <pair <vector<int>,int>> Results;
 std::mutex mtx,mtx_max;
 
 ///STRUCTS///
@@ -59,9 +60,9 @@ struct alignment
 NW fill(int pos, int match_value)
 {
   int top,left,diag,maxim,trace=0;
-  top=Matrix[pos-(j+1)].first+GAP;
-  left=Matrix[pos-1].first+GAP;
-  diag=Matrix[pos-(j+2)].first+match_value;
+  top=ScoreMatrix[pos-(j+1)]+GAP;
+  left=ScoreMatrix[pos-1]+GAP;
+  diag=ScoreMatrix[pos-(j+2)]+match_value;
   maxim=max(top,max(left,diag));
   if(maxim==top)
   {
@@ -78,7 +79,7 @@ NW fill(int pos, int match_value)
   return make_pair(maxim,trace);
 }
 
-void PrintMatrix()
+/*void PrintMatrix()
 {
     for(int x=0;x<=i;x++)
     {
@@ -88,9 +89,9 @@ void PrintMatrix()
         }
         cout<<endl;
     }
-}
+}*/
 
-void fillMatrix(thread_pos data)
+/*void fillMatrix(thread_pos data)
 {
   int pos=data.position,match_value;
   if(data.orientation)
@@ -127,7 +128,7 @@ void fillMatrix(thread_pos data)
       pos+=j+1;
     }
   }
-}
+}*/
 //int contadorr=0;
 void Align(alignment data)
 {
@@ -138,7 +139,7 @@ void Align(alignment data)
   //thread firstt,secondt,thirdt;
   //cout<<data.aligned.first<<endl<<data.aligned.second<<endl;
   //cout<<"{"<<data.position<<"}"<<endl;
-  int a=Matrix[data.position].second;
+  int a=ScoreMatrix[data.position];
   //cout<<data.position<<endl;
   /*switch (Matrix[data.position].second)
   {
@@ -289,7 +290,7 @@ void Align(alignment data)
     }
 }
 
-void PrintTrace()
+/*void PrintTrace()
 {
     for(int x=0;x<=i;x++)
     {
@@ -299,34 +300,64 @@ void PrintTrace()
         }
         cout<<endl;
     }
-}
+}*/
 
 void NeedWuns(string first, string second)
 {
-  //cout<<first<<"-"<<second<<endl;
-  Matrix.resize(0);
-  struct thread_pos t_p[2];
+  Matrix.clear();
   i=first.size();
   j=second.size();
+  cout<<"sizes"<<endl;
   Matrix.resize((i+1)*(j+1));
-  Matrix[0]=make_pair(0,-1);
+  ScoreMatrix.resize((j+1)*2);
+  cout<<"matrix"<<endl;
+  cout<<"resizes"<<endl;
+  Matrix[0]=-1;
+  ScoreMatrix[0]=0;
+  cout<<"first value"<<endl;
+  pair<int,int>aux;
   for (int x=1;x<=j;x++)
   {
-      Matrix[x]=make_pair(Matrix[(x-1)].first+GAP,LEFTGAP);
+      //Matrix[x]=make_pair(Matrix[(x-1)].first+GAP,LEFTGAP);
+      ScoreMatrix[x]=ScoreMatrix[x-1]+GAP;  ///first row
+      Matrix[x]=LEFTGAP;
   }
-  for(int y=1;y<=i;y++)
+  /*for(int y=1;y<=i;y++)
   {
     Matrix[y*(j+1)]=make_pair(Matrix[(y-1)*(j+1)].first+GAP,TOPGAP);
-  }
-  for(int z=1;z<=min(i,j);z++)
+  }*/
+  for(int z=1;z<=i;z++)
   {
-    if(first[z-1]==second[z-1])
+    Matrix[j+1*z+z]=TOPGAP;
+    ScoreMatrix[j+1]=ScoreMatrix[0]+GAP;
+    for (int x=2;x<=j+1;x++)//second
+    {
+      //cout<<first[z-1]<<"->"<<second[x-1]<<endl;;
+      if(first[z-1]==second[x-2])
+      {
+
+        aux=fill(x+j,MATCH);
+      }
+      else
+      {
+        aux=fill(x+j,MISMATCH);
+      }
+      //cout<<first[z-1]<<" vs "<<second[x-2]<<"->"<<aux.first<<endl;
+      ScoreMatrix[x+j]=aux.first;
+      Matrix[(j+1)*z+z+x]=aux.second;
+      //cout<<z-1<<"{"<<x+j<<"}"<<"-> "<<ScoreMatrix[x+j]<<endl;
+    }
+    ScoreMatrix.erase(ScoreMatrix.begin(),ScoreMatrix.begin()+j+1);
+    ScoreMatrix.resize((j+1)*2);
+    /*if(first[z-1]==second[z-1])
     {
       Matrix[(j+1)*z+z]=fill((j+1)*z+z,MATCH);
+      ScoreMatrix[j+1+z]=fill((j+1)z,MATCH);
     }
     else
     {
       Matrix[(j+1)*z+z]=fill((j+1)*z+z,MISMATCH);
+      ScoreMatrix[j+1+z]=fill((j+1)z,MISMATCH);
     }
 
     for(int a=0;a<2;a++)
@@ -338,7 +369,7 @@ void NeedWuns(string first, string second)
     thread firstt(fillMatrix,t_p[0]);
     thread secondt(fillMatrix,t_p[1]);
     firstt.join();
-    secondt.join();
+    secondt.join();*/
   }
 }
 int get_center(int cant)
@@ -407,12 +438,12 @@ int main()
   {
     for(int j=i+1;j<cant;j++)
     {
+      cout<<i<<"x"<<j<<endl;
       first=secuences[i];
       second=secuences[j];
       NeedWuns(first,second);
-      cout<<Matrix[Matrix.size()-1].first<<'\t';
-      Results[i*(cant)+j]=make_pair(Matrix,Matrix[Matrix.size()-1].first);
-      Results[j*(cant)+i]=make_pair(vector<NW>(),Matrix[Matrix.size()-1].first);
+      Results[i*(cant)+j]=make_pair(Matrix,ScoreMatrix[second.size()]);
+      Results[j*(cant)+i]=make_pair(vector<int>(),ScoreMatrix[second.size()]);
     }
     cout<<endl;
   }
@@ -466,7 +497,7 @@ int main()
     second=secuences[y];
     j=second.size();
     Matrix=Results[center*cant+y].first;
-    cout<<Matrix[Matrix.size()-1].first<<endl;
+    //cout<<Matrix[Matrix.size()-1].first<<endl;
     struct alignment al[1];
     al[0].position=Matrix.size()-1;
     al[0].aligned=make_pair("","");

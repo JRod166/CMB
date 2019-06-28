@@ -1,6 +1,6 @@
 #include <vector>
 #include <thread>
-
+#include "math.h"
 using namespace std;
 
 #define Q 3
