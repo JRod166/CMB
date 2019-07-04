@@ -5,8 +5,11 @@
 #include <mutex>
 #include "../tools.h"
 #include <algorithm>
+#include "upgrade.h"
+#include <fstream>
+#include <unistd.h>
 /*
-g++ -o star star.cpp -pthread -std=c++11
+g++ -o star star.cpp upgrade.cpp -pthread -std=c++11
 */
 
 ///DEFINES///
@@ -37,6 +40,7 @@ typedef pair<int,int> NW; //score, trace
 ///GLOBAL///
 vector<int> ScoreMatrix;
 vector<int> Matrix;
+bool AlFlag=0;
 vector <tuple<string,string,int> > Alignments;
 int i,j;
 string first,second;
@@ -57,6 +61,30 @@ struct alignment
 };
 
 ///FUNCTIONS///
+
+void process_mem_usage(double& vm_usage, double& resident_set)
+{
+    vm_usage     = 0.0;
+    resident_set = 0.0;
+
+    // the two fields we want
+    unsigned long vsize;
+    long rss;
+    {
+        std::string ignore;
+        std::ifstream ifs("/proc/self/stat", std::ios_base::in);
+        ifs >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore
+                >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore
+                >> ignore >> ignore >> vsize >> rss;
+    }
+
+    long page_size_kb = sysconf(_SC_PAGE_SIZE) / 1024; // in case x86-64 is configured to use 2MB pages
+    vm_usage = vsize / pow(1024.0,3);
+    resident_set = rss * page_size_kb;
+    resident_set= resident_set/ pow(1024.0,2);
+}
+
+
 NW fill(int pos, int match_value)
 {
   int top,left,diag,maxim,trace=0;
@@ -139,13 +167,18 @@ void Align(alignment data)
   //thread firstt,secondt,thirdt;
   //cout<<data.aligned.first<<endl<<data.aligned.second<<endl;
   //cout<<"{"<<data.position<<"}"<<endl;
-  int a=ScoreMatrix[data.position];
+  int a=Matrix[data.position];
   //cout<<data.position<<endl;
   /*switch (Matrix[data.position].second)
   {
     case DONE:*/
+    if(AlFlag)
+    {
+      return;
+    }
     if(a==DONE)
     {
+      AlFlag=1;
       //cout<<data.aligned.first<<endl<<data.aligned.second<<endl;
       mtx.lock();
       //cout<<"{"<<contador++<<"}"<<endl;
@@ -307,14 +340,10 @@ void NeedWuns(string first, string second)
   Matrix.clear();
   i=first.size();
   j=second.size();
-  cout<<"sizes"<<endl;
   Matrix.resize((i+1)*(j+1));
   ScoreMatrix.resize((j+1)*2);
-  cout<<"matrix"<<endl;
-  cout<<"resizes"<<endl;
   Matrix[0]=-1;
   ScoreMatrix[0]=0;
-  cout<<"first value"<<endl;
   pair<int,int>aux;
   for (int x=1;x<=j;x++)
   {
@@ -424,6 +453,8 @@ using namespace std;
 
 int main()
 {
+  ifstream file;
+  file.open("sequences10000.txt");
   vector <string> secuences;
   int cant,center;
   cin>>cant;
@@ -431,19 +462,21 @@ int main()
   Results.resize(cant*cant);
   for (int i=0;i<cant;i++)
   {
-    cin>>secuences[i];
+    getline(file,secuences[i]);
   }
   auto start = std::chrono::system_clock::now();
   for (int i=0;i<cant-1;i++)
   {
     for(int j=i+1;j<cant;j++)
     {
-      cout<<i<<"x"<<j<<endl;
       first=secuences[i];
       second=secuences[j];
-      NeedWuns(first,second);
-      Results[i*(cant)+j]=make_pair(Matrix,ScoreMatrix[second.size()]);
-      Results[j*(cant)+i]=make_pair(vector<int>(),ScoreMatrix[second.size()]);
+      //NeedWuns(first,second);
+      NeedWuns_2 auxiliarNW= NeedWuns_2(first,second);
+      Matrix=auxiliarNW.gen_matrix();
+      cout<<auxiliarNW.ScoreMatrix[second.size()]<<'\t';
+      Results[i*(cant)+j]=make_pair(Matrix,auxiliarNW.ScoreMatrix[second.size()]);
+      Results[j*(cant)+i]=make_pair(vector<int>(),auxiliarNW.ScoreMatrix[second.size()]);
     }
     cout<<endl;
   }
@@ -464,8 +497,6 @@ int main()
   cout<<"Centro: "<<center<<endl;
   first=secuences[center];
   j=first.size();
-
-
   for (int y=0; y<center;y++)
   {
     Matrix.clear();
@@ -474,14 +505,11 @@ int main()
     second=secuences[y];
     i=second.size();
     Matrix=Results[center+y*cant].first;
-    //cout<<center+y*cant<<": "<<Matrix[Matrix.size()-1].first<<endl;
     struct alignment al[1];
     al[0].position=Matrix.size()-1;
     al[0].aligned=make_pair("","");
-    //cout<<"Struct creado"<<endl;
-    //PrintTrace();
+    AlFlag=0;
     Align(al[0]);
-    //cout<<"Aligned"<<endl;
     int aux=get<0>(Alignments[0]).size();
     max_sequence=max(max_sequence,aux);
     finalSequences.push_back(get<0>(Alignments[0]));
@@ -503,6 +531,7 @@ int main()
     al[0].aligned=make_pair("","");
     //cout<<"Struct creado"<<endl;
     //PrintTrace();
+    AlFlag=0;
     Align(al[0]);
     //cout<<"Aligned"<<endl;
     int aux=get<0>(Alignments[0]).size();
@@ -522,6 +551,10 @@ cout<<"Score: "<<sps(finalSequences)<<endl;
 auto end = std::chrono::system_clock::now();
   double elapsed = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
   std::cout << "tiempo " <<to_string(elapsed)<< '\n';
+  double vm, rss;
+  process_mem_usage(vm, rss);
+  cout << "VM: " << vm << " Gb"<<endl;
+  cout<<"RSS: " << rss << " Gb"<< endl;
   /*Results.clear();
   Results.resize()*/
   return 0;
